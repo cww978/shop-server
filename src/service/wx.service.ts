@@ -57,45 +57,47 @@ export class WxService {
   }
 
   async getWxUserAccessToken(code: string): Promise<WxAccessToken> {
-    this.logger.info('【getWxUserAccessToken】code=%s', code)
     const { appid, appsecret } = this.app.getConfig('wx')
+
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appid}&secret=${appsecret}&code=${code}&grant_type=authorization_code`
     )
+
     if (Object.hasOwnProperty.call(data, 'access_token')) {
-      this.logger.info('【getWxUserAccessToken】success openid=%s', data.openid)
+      const access = await this.accessTokenModel.findOne({
+        where: { openid: data.openid }
+      })
       const accessParam = copyValueToParams<WxAccessToken>(
         data,
-        new WxAccessToken(),
+        access || new WxAccessToken(),
         WxAccessToken.getKeys()
       )
       await this.accessTokenModel.save(accessParam)
       return accessParam
     } else {
-      this.logger.error(
-        '【getWxUserAccessToken】error %s',
-        JSON.stringify(data)
-      )
       return null
     }
   }
 
   async getWxUserInfo(token: string, openid: string): Promise<WxUser> {
-    this.logger.info('【getWxUserInfo】openid=%s', openid)
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
     if (Object.hasOwnProperty.call(data, 'openid')) {
-      this.logger.info('【getWxUserInfo】success openid=%s', data.openid)
+      const user = await this.userModel.findOne({
+        where: { openid: data.openid }
+      })
+
       const userParam = copyValueToParams<WxUser>(
         data,
-        new WxUser(),
+        user || new WxUser(),
         WxUser.getKeys()
       )
+
       this.userModel.save(userParam)
+
       return userParam
     } else {
-      this.logger.error('【getWxUserInfo】error %s', JSON.stringify(data))
       return null
     }
   }
