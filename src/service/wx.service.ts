@@ -43,9 +43,12 @@ export class WxService {
 
   async wxLogin(code: string) {
     const access = await this.getWxUserAccessToken(code)
-    const user = await this.getWxUserInfo(access.access_token, access.openid)
+    const user = await this.getWxUserInfo(access?.access_token, access?.openid)
     if (user) {
-      const token = await this.userService.getToken(user.openid, user.nickname)
+      const token = await this.userService.getToken(
+        user?.openid,
+        user?.nickname
+      )
       return {
         user_id: user.openid,
         user_info: user,
