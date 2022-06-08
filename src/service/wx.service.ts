@@ -68,6 +68,7 @@ export class WxService {
         data,
         new WxAccessToken()
       )
+      console.log(accessParam)
       await this.accessTokenModel.save(accessParam)
       return accessParam
     } else {
