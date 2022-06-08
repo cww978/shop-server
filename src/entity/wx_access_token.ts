@@ -16,14 +16,10 @@ export class WxAccessToken {
   })
   openid: string
 
-  @Column({
-    length: 100
-  })
+  @Column()
   access_token: string
 
-  @Column({
-    length: 100
-  })
+  @Column()
   refresh_token: string
 
   @Column()
