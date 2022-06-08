@@ -3,13 +3,15 @@ import { Application } from '@midwayjs/koa'
 import { InjectEntityModel } from '@midwayjs/orm'
 import { Repository } from 'typeorm'
 import { ILogger } from '@midwayjs/logger'
+import axios from 'axios'
+import moment = require('moment')
 
 import { WxCheckOption } from '../interface'
 import { sha1, copyValueToParams } from '../utils/index'
 import { WxAccessToken } from '../entity/wx_access_token'
 import { WxUser } from '../entity/wx_user'
 import { UserService } from './user.service'
-import axios from 'axios'
+import { WxAccessTokenRes, WxUserInfoRes } from '../interface'
 
 @Provide()
 export class WxService {
@@ -42,8 +44,11 @@ export class WxService {
   }
 
   async wxLogin(code: string) {
-    const access = await this.getWxUserAccessToken(code)
-    const user = await this.getWxUserInfo(access?.access_token, access?.openid)
+    const access: WxAccessTokenRes = await this.getAccessTokenForCode(code)
+    const user: WxUserInfoRes = await this.getWxUserInfo(
+      access?.access_token,
+      access?.openid
+    )
     if (user) {
       const token = await this.userService.getToken(user.openid, user.nickname)
       return {
@@ -56,7 +61,7 @@ export class WxService {
     }
   }
 
-  async getWxUserAccessToken(code: string): Promise<WxAccessToken> {
+  async getAccessTokenForCode(code: string): Promise<WxAccessTokenRes> {
     const { appid, appsecret } = this.app.getConfig('wx')
 
     const { data } = await axios.get(
@@ -73,13 +78,43 @@ export class WxService {
         WxAccessToken.getKeys()
       )
       await this.accessTokenModel.save(accessParam)
-      return accessParam
+      return data
     } else {
       return null
     }
   }
 
-  async getWxUserInfo(token: string, openid: string): Promise<WxUser> {
+  async getAccessTokenForOpenid(openid: string): Promise<string> {
+    const access = await this.accessTokenModel.findOne({
+      where: { openid: openid }
+    })
+    if (access === null) {
+      return null
+    } else {
+      const saveTime = moment(access.update_time).valueOf() + access.expires_in
+      const nowTime = moment(Date.now()).valueOf()
+      if (nowTime < saveTime) {
+        return access.access_token
+      } else {
+        const refresh = await this.getRefreshToken(access.refresh_token)
+        access.access_token = refresh.access_token
+        access.refresh_token = refresh.refresh_token
+        access.expires_in = refresh.expires_in
+        this.accessTokenModel.save(access)
+        return access.access_token
+      }
+    }
+  }
+
+  async getRefreshToken(refresh_token: string): Promise<WxAccessTokenRes> {
+    const { appid } = this.app.getConfig('wx')
+    const { data } = await axios.get(
+      `https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=${appid}&grant_type=refresh_token&refresh_token=${refresh_token}`
+    )
+    return data
+  }
+
+  async getWxUserInfo(token: string, openid: string): Promise<WxUserInfoRes> {
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
@@ -93,10 +128,9 @@ export class WxService {
         user || new WxUser(),
         WxUser.getKeys()
       )
-
       this.userModel.save(userParam)
 
-      return userParam
+      return data
     } else {
       return null
     }
