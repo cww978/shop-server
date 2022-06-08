@@ -59,4 +59,18 @@ export class WxUser {
 
   @UpdateDateColumn()
   update_time: Date
+
+  static getKeys() {
+    return [
+      'openid',
+      'nickname',
+      'headimgurl',
+      'mobile',
+      'sex',
+      'country',
+      'province',
+      'city',
+      'language'
+    ]
+  }
 }

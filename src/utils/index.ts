@@ -7,8 +7,12 @@ export function sha1(str: string) {
   return str
 }
 
-export function copyValueToParams<T>(data: any, target: T) {
-  for (const key in target) {
+export function copyValueToParams<T>(
+  data: any,
+  target: T,
+  keys: Array<string>
+) {
+  for (const key of keys) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       target[key] = data[key]
     }

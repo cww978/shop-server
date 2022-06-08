@@ -45,10 +45,7 @@ export class WxService {
     const access = await this.getWxUserAccessToken(code)
     const user = await this.getWxUserInfo(access?.access_token, access?.openid)
     if (user) {
-      const token = await this.userService.getToken(
-        user?.openid,
-        user?.nickname
-      )
+      const token = await this.userService.getToken(user.openid, user.nickname)
       return {
         user_id: user.openid,
         user_info: user,
@@ -69,9 +66,9 @@ export class WxService {
       this.logger.info('【getWxUserAccessToken】success openid=%s', data.openid)
       const accessParam = copyValueToParams<WxAccessToken>(
         data,
-        new WxAccessToken()
+        new WxAccessToken(),
+        WxAccessToken.getKeys()
       )
-      console.log(accessParam)
       await this.accessTokenModel.save(accessParam)
       return accessParam
     } else {
@@ -89,8 +86,12 @@ export class WxService {
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
     if (Object.hasOwnProperty.call(data, 'openid')) {
-      this.logger.info('【getWxUserInfo】success openid=%d', data.openid)
-      const userParam = copyValueToParams<WxUser>(data, new WxUser())
+      this.logger.info('【getWxUserInfo】success openid=%s', data.openid)
+      const userParam = copyValueToParams<WxUser>(
+        data,
+        new WxUser(),
+        WxUser.getKeys()
+      )
       this.userModel.save(userParam)
       return userParam
     } else {

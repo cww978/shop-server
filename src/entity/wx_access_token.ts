@@ -34,4 +34,8 @@ export class WxAccessToken {
 
   @UpdateDateColumn()
   update_time: Date
+
+  static getKeys() {
+    return ['openid', 'access_token', 'refresh_token', 'expires_in']
+  }
 }
