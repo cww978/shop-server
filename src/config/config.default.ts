@@ -17,6 +17,10 @@ export default {
     synchronize: false,
     logging: true
   },
+  jwt: {
+    secret: '3afa41js',
+    expiresIn: '2d'
+  },
   koa: {
     port: 80
   }

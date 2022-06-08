@@ -6,9 +6,13 @@ export class HomeController {
   @Inject()
   wxService: WxService
 
-  @Get('/get_access_token')
-  async getAccessToken(@Query('code') code: string): Promise<string> {
-    const data = await this.wxService.getWxUserAccessToken(code)
-    return data
+  @Get('/login')
+  async login(@Query('code') code: string): Promise<any> {
+    const data = await this.wxService.wxLogin(code)
+    return {
+      code: data ? 0 : -1,
+      data,
+      message: 'success'
+    }
   }
 }

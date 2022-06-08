@@ -6,3 +6,12 @@ export function sha1(str: string) {
   str = shasum.digest('hex')
   return str
 }
+
+export function copyValueToParams<T>(data: any, target: T) {
+  for (const key in target) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      target[key] = data[key]
+    }
+  }
+  return target
+}

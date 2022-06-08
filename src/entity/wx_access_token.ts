@@ -6,8 +6,8 @@ import {
   UpdateDateColumn
 } from 'typeorm'
 
-@EntityModel('wx_user')
-export class WxUser {
+@EntityModel('wx_access_token')
+export class WxAccessToken {
   @PrimaryGeneratedColumn()
   id: number
 
@@ -19,40 +19,15 @@ export class WxUser {
   @Column({
     length: 100
   })
-  nickname: string
+  access_token: string
 
   @Column({
     length: 100
   })
-  headimgurl: string
-
-  @Column({
-    length: 50
-  })
-  mobile: string
+  refresh_token: string
 
   @Column()
-  sex: number
-
-  @Column({
-    length: 100
-  })
-  country: string
-
-  @Column({
-    length: 100
-  })
-  province: string
-
-  @Column({
-    length: 100
-  })
-  city: string
-
-  @Column({
-    length: 100
-  })
-  language: string
+  expires_in: number
 
   @CreateDateColumn()
   create_time: Date
