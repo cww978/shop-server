@@ -24,12 +24,11 @@ export class WxService {
 
   async getWxUserAccessToken(code: string) {
     const { appid, appsecret } = this.app.getConfig('wx')
-
+    console.log('code:', code)
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appid}&secret=${appsecret}&code=${code}&grant_type=authorization_code`
     )
     console.log(data)
-
     return data
   }
 }
