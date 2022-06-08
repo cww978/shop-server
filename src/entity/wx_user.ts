@@ -21,9 +21,7 @@ export class WxUser {
   })
   nickname: string
 
-  @Column({
-    length: 100
-  })
+  @Column()
   headimgurl: string
 
   @Column({
