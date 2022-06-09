@@ -7,8 +7,8 @@ import * as jwt from '@midwayjs/jwt'
 import { join } from 'path'
 // import { DefaultErrorFilter } from './filter/default.filter';
 // import { NotFoundFilter } from './filter/notfound.filter';
-import { ReportMiddleware } from './middleware/report.middleware'
-
+import { JwtMiddleware } from './middleware/jwt.middleware'
+import { DefaultErrorFilter } from './filter/default.filter'
 @Configuration({
   imports: [
     koa,
@@ -28,8 +28,8 @@ export class ContainerLifeCycle {
 
   async onReady() {
     // add middleware
-    this.app.useMiddleware([ReportMiddleware])
+    this.app.useMiddleware([JwtMiddleware])
     // add filter
-    // this.app.useFilter([NotFoundFilter, DefaultErrorFilter]);
+    this.app.useFilter([DefaultErrorFilter])
   }
 }

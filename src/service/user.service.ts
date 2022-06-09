@@ -27,13 +27,4 @@ export class UserService {
     const result = await this.userModel.save(user)
     return result
   }
-
-  async getToken(userid: string, username: string) {
-    const payload = {
-      userid: userid,
-      username: username
-    }
-    const token = await this.jwtService.sign(payload)
-    return token
-  }
 }

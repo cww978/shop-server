@@ -1,4 +1,4 @@
-import { Provide, App, Logger, Inject } from '@midwayjs/decorator'
+import { Provide, App, Logger, Inject, Config } from '@midwayjs/decorator'
 import { Application } from '@midwayjs/koa'
 import { InjectEntityModel } from '@midwayjs/orm'
 import { Repository } from 'typeorm'
@@ -10,7 +10,7 @@ import { WxCheckOption } from '../interface'
 import { sha1, copyValueToParams } from '../utils/index'
 import { WxAccessToken } from '../entity/wx_access_token'
 import { WxUser } from '../entity/wx_user'
-import { UserService } from './user.service'
+import { AuthService } from './auth.service'
 import { WxAccessTokenRes, WxUserInfoRes } from '../interface'
 
 @Provide()
@@ -19,7 +19,10 @@ export class WxService {
   logger: ILogger
 
   @Inject()
-  userService: UserService
+  authService: AuthService
+
+  @Config('wx')
+  wxConfig
 
   @App()
   app: Application
@@ -50,7 +53,10 @@ export class WxService {
       access?.openid
     )
     if (user) {
-      const token = await this.userService.getToken(user.openid, user.nickname)
+      const token = await this.authService.createToken(
+        user.openid,
+        user.nickname
+      )
       return {
         user_id: user.openid,
         user_info: user,
@@ -62,7 +68,7 @@ export class WxService {
   }
 
   async getAccessTokenForCode(code: string): Promise<WxAccessTokenRes> {
-    const { appid, appsecret } = this.app.getConfig('wx')
+    const { appid, appsecret } = this.wxConfig
 
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${appid}&secret=${appsecret}&code=${code}&grant_type=authorization_code`
@@ -107,7 +113,7 @@ export class WxService {
   }
 
   async getRefreshToken(refresh_token: string): Promise<WxAccessTokenRes> {
-    const { appid } = this.app.getConfig('wx')
+    const { appid } = this.wxConfig
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=${appid}&grant_type=refresh_token&refresh_token=${refresh_token}`
     )
