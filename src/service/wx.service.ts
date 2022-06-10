@@ -57,11 +57,7 @@ export class WxService {
         user.openid,
         user.nickname
       )
-      return {
-        userid: user.openid,
-        user: user,
-        token
-      }
+      return token
     } else {
       return null
     }
