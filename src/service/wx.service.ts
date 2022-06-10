@@ -58,8 +58,8 @@ export class WxService {
         user.nickname
       )
       return {
-        user_id: user.openid,
-        user_info: user,
+        userid: user.openid,
+        user: user,
         token
       }
     } else {
