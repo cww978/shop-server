@@ -1,9 +1,8 @@
 import { Controller, Get, Inject, Query } from '@midwayjs/decorator'
 import { Context } from '@midwayjs/koa'
-import { InjectEntityModel } from '@midwayjs/orm'
-import { Repository } from 'typeorm'
+
 import { WxService } from '../service/wx.service'
-import { WxAccessToken } from '../entity/wx_access_token'
+import { AuthService } from '../service/auth.service'
 
 @Controller('/')
 export class HomeController {
@@ -11,10 +10,10 @@ export class HomeController {
   wxService: WxService
 
   @Inject()
-  ctx: Context
+  authService: AuthService
 
-  @InjectEntityModel(WxAccessToken)
-  accessTokenModel: Repository<WxAccessToken>
+  @Inject()
+  ctx: Context
 
   @Get('/')
   async home(@Query() queryData): Promise<string> {
@@ -25,5 +24,14 @@ export class HomeController {
   @Get('/test')
   async test(): Promise<any> {
     return 'Hello'
+  }
+
+  @Get('/get_token')
+  async token(): Promise<any> {
+    const token = await this.authService.createToken(
+      'ofhN951RnXIxqx_if3m7pjeEjuSk',
+      'Caowenw'
+    )
+    return token
   }
 }

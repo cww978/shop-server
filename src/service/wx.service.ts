@@ -120,6 +120,12 @@ export class WxService {
     return data
   }
 
+  async getUserInfo(openid: string): Promise<WxUser> {
+    return await this.userModel.findOne({
+      where: { openid: openid }
+    })
+  }
+
   async getWxUserInfo(token: string, openid: string): Promise<WxUserInfoRes> {
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`

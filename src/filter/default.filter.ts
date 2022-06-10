@@ -5,10 +5,11 @@ import { Context } from '@midwayjs/koa'
 @Catch()
 export class DefaultErrorFilter {
   async catch(err: MidwayHttpError, ctx: Context) {
-    ctx.status = err.status
+    ctx.status = typeof err.status === 'number' ? err.status : 500
     return {
-      status: err.status,
-      message: err.message
+      status: typeof err.status === 'number' ? err.status : 500,
+      message:
+        typeof err.message !== 'undefined' ? err.message : 'unknown error'
     }
   }
 }

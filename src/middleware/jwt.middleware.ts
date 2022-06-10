@@ -18,15 +18,8 @@ export class JwtMiddleware
     }
   }
 
-  resolve() {
-    return async (ctx: Context, next: NextFunction) => {
-      const result = await next()
-      return result
-    }
-  }
-
   ignore(ctx: Context): boolean {
     // 下面的路由将忽略此中间件
-    return ctx.path === '/api/get_token' || ctx.path === '/api/401'
+    return ctx.path === '/get_token' || ctx.path === '/wx/login'
   }
 }
