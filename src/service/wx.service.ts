@@ -194,8 +194,6 @@ export class WxService {
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
-    console.log(data)
-
     if (Object.hasOwnProperty.call(data, 'openid')) {
       const user = await this.userModel.findOne({
         where: { openid: data.openid }
