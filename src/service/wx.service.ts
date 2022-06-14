@@ -1,17 +1,19 @@
 import { Provide, App, Logger, Inject, Config } from '@midwayjs/decorator'
 import { Application } from '@midwayjs/koa'
 import { InjectEntityModel } from '@midwayjs/orm'
+import { RedisService } from '@midwayjs/redis'
 import { Repository } from 'typeorm'
 import { ILogger } from '@midwayjs/logger'
 import axios from 'axios'
+import stringRandom = require('string-random')
 import moment = require('moment')
 
 import { WxCheckOption } from '../interface'
-import { sha1, copyValueToParams } from '../utils/index'
+import { sha1, copyValueToParams, getExpiresTime } from '../utils/index'
 import { WxAccessToken } from '../entity/wx_access_token'
 import { WxUser } from '../entity/wx_user'
 import { AuthService } from './auth.service'
-import { WxAccessTokenRes, WxUserInfoRes } from '../interface'
+import { WxAccessTokenRes, WxUserInfoRes, WxConfigRes } from '../interface'
 
 @Provide()
 export class WxService {
@@ -20,6 +22,9 @@ export class WxService {
 
   @Inject()
   authService: AuthService
+
+  @Inject()
+  redisService: RedisService
 
   @Config('wx')
   wxConfig
@@ -48,7 +53,7 @@ export class WxService {
 
   async wxLogin(code: string) {
     const access: WxAccessTokenRes = await this.getAccessTokenForCode(code)
-    const user: WxUserInfoRes = await this.getWxUserInfo(
+    const user: WxUserInfoRes = await this.updateWxUserInfo(
       access?.access_token,
       access?.openid
     )
@@ -60,6 +65,47 @@ export class WxService {
       return token
     } else {
       return null
+    }
+  }
+
+  async wxSignature(openid: string, url: string): Promise<WxConfigRes> {
+    const jsapiTicket = await this.getJsTicket(openid)
+    const config: WxConfigRes = {
+      appid: this.wxConfig.appid,
+      noncestr: stringRandom(16),
+      timestamp: Date.now().valueOf(),
+      signature: null
+    }
+    if (jsapiTicket) {
+      const ticket = 'jsapi_ticket=' + jsapiTicket
+      const timestamp = 'timestamp=' + config.timestamp
+      const link = 'url=' + url
+      const noncestr = 'noncestr=' + config.noncestr
+      const string1 = `${ticket}&${noncestr}&${timestamp}&${link}`
+      config.signature = sha1(string1)
+    } else {
+      this.logger.warn('【wxSignature】', 'jsapi_ticket is null')
+    }
+    return config
+  }
+
+  async getJsTicket(openid: string) {
+    const key = 'jsticket-' + openid
+    const ticket = await this.redisService.get(key)
+    if (ticket) {
+      return ticket
+    } else {
+      const access_token = await this.getAccessTokenForOpenid(openid)
+      const { data } = await axios.get(
+        `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${access_token}&type=jsapi`
+      )
+      if (data.errcode === 0) {
+        this.redisService.set(key, data.ticket, 'EX', data.expires_in)
+        return data.ticket
+      } else {
+        this.logger.warn('【getJsTicket】' + data.errmsg)
+        return null
+      }
     }
   }
 
@@ -79,6 +125,7 @@ export class WxService {
         access || new WxAccessToken(),
         WxAccessToken.getKeys()
       )
+      accessParam.expires_time = new Date(getExpiresTime(data.expires_in))
       await this.accessTokenModel.save(accessParam)
       return data
     } else {
@@ -93,15 +140,13 @@ export class WxService {
     if (access === null) {
       return null
     } else {
-      const saveTime = moment(access.update_time).valueOf() + access.expires_in
-      const nowTime = moment(Date.now()).valueOf()
-      if (nowTime < saveTime) {
+      if (moment(Date.now()).isBefore(access.expires_time)) {
         return access.access_token
       } else {
         const refresh = await this.getRefreshToken(access.refresh_token)
         access.access_token = refresh.access_token
         access.refresh_token = refresh.refresh_token
-        access.expires_in = refresh.expires_in
+        access.expires_time = new Date(getExpiresTime(refresh.expires_in))
         this.accessTokenModel.save(access)
         return access.access_token
       }
@@ -122,7 +167,10 @@ export class WxService {
     })
   }
 
-  async getWxUserInfo(token: string, openid: string): Promise<WxUserInfoRes> {
+  async updateWxUserInfo(
+    token: string,
+    openid: string
+  ): Promise<WxUserInfoRes> {
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
@@ -136,8 +184,8 @@ export class WxService {
         user || new WxUser(),
         WxUser.getKeys()
       )
-      this.userModel.save(userParam)
 
+      this.userModel.save(userParam)
       return data
     } else {
       return null

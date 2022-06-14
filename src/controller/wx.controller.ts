@@ -20,6 +20,19 @@ export class HomeController {
     }
   }
 
+  @Get('/signature')
+  async signature(@Query('url') url: string): Promise<any> {
+    const data = await this.wxService.wxSignature(
+      this.ctx.state.user.userid,
+      url
+    )
+    return {
+      code: data ? 0 : -1,
+      data,
+      message: 'success'
+    }
+  }
+
   @Get('/get_user')
   async getUserInfo(): Promise<any> {
     const data = await this.wxService.getUserInfo(this.ctx.state.user.userid)

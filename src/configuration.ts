@@ -2,6 +2,7 @@ import { Configuration, App } from '@midwayjs/decorator'
 import * as koa from '@midwayjs/koa'
 import * as validate from '@midwayjs/validate'
 import * as orm from '@midwayjs/orm'
+import * as redis from '@midwayjs/redis'
 import * as info from '@midwayjs/info'
 import * as jwt from '@midwayjs/jwt'
 import { join } from 'path'
@@ -13,6 +14,7 @@ import { DefaultErrorFilter } from './filter/default.filter'
   imports: [
     koa,
     validate,
+    redis,
     orm,
     jwt,
     {

@@ -23,7 +23,7 @@ export class WxAccessToken {
   refresh_token: string
 
   @Column()
-  expires_in: number
+  expires_time: Date
 
   @CreateDateColumn()
   create_time: Date

@@ -38,3 +38,13 @@ export interface WxUserInfoRes {
   country: string
   headimgurl: string
 }
+
+/**
+ * @description wx-config
+ */
+export interface WxConfigRes {
+  appid: string
+  timestamp: number
+  noncestr: string
+  signature: string
+}

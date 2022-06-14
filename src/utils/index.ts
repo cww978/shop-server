@@ -1,5 +1,10 @@
 import { createHash } from 'crypto'
 
+/**
+ * 获取sha
+ * @param str
+ * @returns
+ */
 export function sha1(str: string) {
   const shasum = createHash('sha1')
   shasum.update(str)
@@ -7,6 +12,13 @@ export function sha1(str: string) {
   return str
 }
 
+/**
+ * 根据keys拷贝数据到目标对象
+ * @param data
+ * @param target
+ * @param keys
+ * @returns
+ */
 export function copyValueToParams<T>(
   data: any,
   target: T,
@@ -18,4 +30,13 @@ export function copyValueToParams<T>(
     }
   }
   return target
+}
+
+/**
+ * 获取过期时间 传入 expires 秒
+ * @param expires
+ * @returns
+ */
+export function getExpiresTime(expires: number) {
+  return Date.now().valueOf() + expires * 1000
 }
