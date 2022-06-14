@@ -95,7 +95,7 @@ export class WxService {
     if (ticket) {
       return ticket
     } else {
-      const access_token = await this.getAccessTokenForOpenid(openid)
+      const access_token = await this.getGlobalAccessToken()
       const { data } = await axios.get(
         `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${access_token}&type=jsapi`
       )
@@ -104,6 +104,26 @@ export class WxService {
         return data.ticket
       } else {
         this.logger.warn('【getJsTicket】' + data.errmsg)
+        return null
+      }
+    }
+  }
+
+  async getGlobalAccessToken() {
+    const key = 'global-access-token'
+    const { appid, appsecret } = this.wxConfig
+    const token = await this.redisService.get(key)
+    if (token) {
+      return token
+    } else {
+      const { data } = await axios.get(
+        `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${appsecret}`
+      )
+      if (data.errcode === 0) {
+        this.redisService.set(key, data.access_token, 'EX', data.expires_in)
+        return data.access_token
+      } else {
+        this.logger.warn('【getGlobalAccessToken】' + data.errmsg)
         return null
       }
     }
@@ -174,6 +194,8 @@ export class WxService {
     const { data } = await axios.get(
       `https://api.weixin.qq.com/sns/userinfo?access_token=${token}&openid=${openid}&lang=zh_CN`
     )
+    console.log(data)
+
     if (Object.hasOwnProperty.call(data, 'openid')) {
       const user = await this.userModel.findOne({
         where: { openid: data.openid }
