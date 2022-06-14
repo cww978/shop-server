@@ -119,7 +119,7 @@ export class WxService {
       const { data } = await axios.get(
         `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${appsecret}`
       )
-      if (data.errcode === 0) {
+      if (Object.hasOwnProperty.call(data, 'access_token')) {
         this.redisService.set(key, data.access_token, 'EX', data.expires_in)
         return data.access_token
       } else {
